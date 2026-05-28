@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IBI Goals & Reminder</title>
+    
+    <!-- IBI Custom Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23000000'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' fill='%2300c5ff' font-family='Roboto, Arial, sans-serif' font-size='38' font-weight='900'>IBI</text></svg>">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #f4f5f7; --surface: #ffffff; --surface-alt: #f8fafc;
+            --text-main: #0f172a; --text-muted: #64748b; --border: #e2e8f0;
+            --input-bg: #ffffff; --primary: #2563eb; --primary-hover: #1d4ed8;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg: #0f172a; --surface: #1e293b; --surface-alt: #020617;
+            --text-main: #f8fafc; --text-muted: #94a3b8; --border: #334155;
+            --input-bg: #0f172a; --primary: #3b82f6; --primary-hover: #60a5fa;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif; background-color: var(--bg);
+            color: var(--text-main); margin: 0; padding: 24px 16px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; transition: all 0.3s;
+        }
+
+        .header { width: 100%; max-width: 600px; display: flex; justify-content: flex-end; margin-bottom: 16px; }
+        
+        .theme-switch {
+            background: var(--surface); border: 1px solid var(--border); color: var(--text-main);
+            padding: 8px 16px; border-radius: 24px; cursor: pointer; font-size: 14px; font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s;
+        }
+        .theme-switch:hover { border-color: var(--primary); }
+
+        .container {
+            background-color: var(--surface); padding: 32px; border-radius: 16px;
+            box-shadow: var(--shadow); width: 100%; max-width: 600px; box-sizing: border-box;
+        }
+
+        .brand-container { text-align: center; margin-bottom: 24px; }
+        .brand-logo { width: 100%; max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .app-title { margin: 0; font-size: 24px; font-weight: 800; color: var(--text-main); letter-spacing: 0.5px; }
+
+        .section-title {
+            background-color: #000000; color: #00c5ff; padding: 12px 16px; border-radius: 8px;
+            font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            margin: 24px 0 16px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-group { margin-bottom: 16px; display: flex; flex-direction: column; }
+        label { margin-bottom: 8px; font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
+        
+        input, select, textarea {
+            width: 100%; padding: 14px; background-color: var(--input-bg); color: var(--text-main);
+            border: 1px solid var(--border); border-radius: 8px; font-size: 16px; box-sizing: border-box;
+            transition: all 0.2s; font-family: 'Roboto', sans-serif;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
+        
+        .btn-submit {
+            width: 100%; padding: 16px; margin-top: 16px; background-color: var(--primary); color: white;
+            border: none; border-radius: 8px; font-size: 16px; font-weight: 700; text-transform: uppercase;
+            cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+        .btn-submit:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        /* Pending Tasks List */
+        .task-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+        .task-card {
+            background-color: var(--surface-alt); border: 1px solid var(--border);
+            border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px;
+            border-left: 5px solid var(--warning);
+        }
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .task-cat { font-size: 11px; font-weight: 800; text-transform: uppercase; background: var(--bg); padding: 4px 8px; border-radius: 6px; color: var(--primary); }
+        .task-time { font-size: 13px; color: var(--danger); font-weight: 700; display: flex; align-items: center; gap: 4px;}
+        .task-desc { font-size: 16px; font-weight: 600; color: var(--text-main); margin-top: 4px; }
+        
+        .btn-complete {
+            background-color: transparent; border: 2px solid var(--success); color: var(--success);
+            padding: 10px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;
+            margin-top: 8px; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px;
+        }
+        .btn-complete:hover { background-color: var(--success); color: white; }
+
+        /* Full Screen Alarm Modal */
+        .alarm-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            z-index: 9999; justify-content: center; align-items: center; padding: 20px;
+        }
+        .alarm-box {
+            background: #000; border: 2px solid #00c5ff; padding: 40px 24px; text-align: center;
+            border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 0 30px rgba(0, 197, 255, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 20px rgba(0,197,255,0.4); } 50% { box-shadow: 0 0 50px rgba(0,197,255,0.8); } 100% { box-shadow: 0 0 20px rgba(0,197,255,0.4); } }
+        .alarm-title { color: #00c5ff; font-size: 28px; font-weight: 900; margin-bottom: 16px; text-transform: uppercase;}
+        .alarm-desc { color: white; font-size: 20px; margin-bottom: 32px; font-weight: 500; }
+        .btn-ack { background: #00c5ff; color: #000; border: none; padding: 16px 32px; font-size: 18px; font-weight: 800; border-radius: 8px; cursor: pointer; width: 100%; }
+        
+        #status-msg { text-align: center; margin-top: 16px; font-weight: 600; font-size: 14px; display: none; padding: 12px; border-radius: 8px;}
+    </style>
+</head>
+<body data-theme="dark">
+
+    <!-- FULL SCREEN ALARM OVERLAY -->
+    <div class="alarm-overlay" id="alarmModal">
+        <div class="alarm-box">
+            <div class="alarm-title">⏰ REMINDER PENDING!</div>
+            <div class="alarm-desc" id="alarmText">Task Name Here</div>
+            <button class="btn-ack" onclick="stopAlarm()">ACKNOWLEDGE</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <button class="theme-switch" id="themeBtn" onclick="toggleTheme()">☀️ Light Mode</button>
+    </div>
+
+    <div class="container">
+        <div class="brand-container">
+            <img src="logo.png" alt="India Business International" class="brand-logo" onerror="this.style.display='none'">
+            <h2 class="app-title">IBI Goals & Reminder</h2>
+        </div>
+
+        <!-- NEW TASK FORM -->
+        <form id="reminderForm">
+            <div class="section-title">➕ Add New Reminder</div>
+            
+            <div class="form-group">
+                <label>Category</label>
+                <select id="category" required>
+                    <option value="" disabled selected>Select Category...</option>
+                    <option value="Goal">🎯 Goal</option>
+                    <option value="Work">💼 Work Task</option>
+                    <option value="Purchase">🛒 Purchase</option>
+                    <option value="Visit">📍 Field Visit</option>
+                    <option value="Meeting">🤝 Meeting</option>
+                    <option value="Other">📌 Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Task Details</label>
+                <textarea id="description" rows="3" placeholder="What needs to be done?" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Set Reminder Date & Time</label>
+                <input type="datetime-local" id="reminderTime" required>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">💾 Save Reminder</button>
+            <div id="status-msg"></div>
+        </form>
+
+        <!-- PENDING TASKS -->
+        <div class="section-title" style="margin-top: 40px;">⏳ Pending Tasks</div>
+        <div class="task-list" id="pendingList">
+            <!-- Populated dynamically -->
+        </div>
+    </div>
+
+<script>
+    // --- 1. Theme Logic ---
+    function toggleTheme() {
+        const body = document.body;
+        const btn = document.getElementById('themeBtn');
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.setAttribute('data-theme', 'light');
+            btn.innerText = '🌙 Dark Mode';
+            localStorage.setItem('ibi_goals_theme', 'light');
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            btn.innerText = '☀️ Light Mode';
+            localStorage.setItem('ibi_goals_theme', 'dark');
+        }
+    }
+    if(localStorage.getItem('ibi_goals_theme') === 'light'){
+        document.body.setAttribute('data-theme', 'light');
+        document.getElementById('themeBtn').innerText = '🌙 Dark Mode';
+    }
+
+    // --- 2. State & Database Logic ---
+    // REPLACE THIS URL WITH YOUR GOOGLE APPS SCRIPT WEB APP URL
+    const SCRIPT_URL = "YOUR_WEB_APP_URL_HERE"; 
+    
+    let activeTasks = JSON.parse(localStorage.getItem('ibi_active_tasks')) || [];
+    let currentAlarmTask = null;
+
+    function saveLocal() {
+        localStorage.setItem('ibi_active_tasks', JSON.stringify(activeTasks));
+        renderTasks();
+    }
+
+    // Add new task
+    document.getElementById('reminderForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('submitBtn');
+        const msg = document.getElementById('status-msg');
+        
+        btn.disabled = true;
+        btn.innerText = "Saving to Database...";
+        
+        const newTask = {
+            id: "TASK_" + Date.now(), // Unique ID
+            category: document.getElementById('category').value,
+            description: document.getElementById('description').value,
+            reminderTime: document.getElementById('reminderTime').value, // YYYY-MM-DDTHH:MM
+            notified: false
+        };
+
+        // 1. Send to Google Sheets
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: "add",
+                id: newTask.id,
+                category: newTask.category,
+                description: newTask.description,
+                reminderTime: newTask.reminderTime.replace('T', ' ')
+            }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === "success"){
+                // 2. Save Locally to track alarm
+                activeTasks.push(newTask);
+                saveLocal();
+                
+                msg.innerText = "✅ Reminder saved successfully!";
+                msg.style.display = "block";
+                msg.style.backgroundColor = "var(--success)";
+                msg.style.color = "white";
+                
+                document.getElementById('reminderForm').reset();
+            } else {
+                alert("Database Error: " + data.message);
+            }
+        })
+        .catch(err => alert("Network Error: " + err))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerText = "💾 Save Reminder";
+            setTimeout(() => msg.style.display = "none", 4000);
+        });
+    });
+
+    // Complete a task
+    function completeTask(taskId) {
+        if(!confirm("Mark this task as completed?")) return;
+
+        // Remove from local array immediately so UI updates
+        const taskElement = document.getElementById(taskId);
+        if(taskElement) taskElement.style.opacity = '0.5';
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: "complete",
+                id: taskId
+            }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === "success"){
+                // Remove from local memory permanently
+                activeTasks = activeTasks.filter(t => t.id !== taskId);
+                saveLocal();
+            } else {
+                alert("Error updating sheet: " + data.message);
+                renderTasks(); // Revert UI if failed
+            }
+        })
+        .catch(err => {
+            alert("Network Error: " + err);
+            renderTasks(); // Revert UI
+        });
+    }
+
+    // Render local pending tasks
+    function renderTasks() {
+        const list = document.getElementById('pendingList');
+        
+        // Sort by closest reminder time
+        activeTasks.sort((a, b) => new Date(a.reminderTime) - new Date(b.reminderTime));
+
+        if(activeTasks.length === 0) {
+            list.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:14px;">All caught up! No pending reminders.</div>`;
+            return;
+        }
+
+        list.innerHTML = activeTasks.map(task => {
+            // Format time for display (e.g., 28 May 2026, 10:30 PM)
+            let dt = new Date(task.reminderTime);
+            let displayTime = dt.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+
+            return `
+            <div class="task-card" id="${task.id}">
+                <div class="task-header">
+                    <span class="task-cat">${task.category}</span>
+                    <span class="task-time">⏰ ${displayTime}</span>
+                </div>
+                <div class="task-desc">${task.description}</div>
+                <button class="btn-complete" onclick="completeTask('${task.id}')">
+                    ✔️ Mark as Completed
+                </button>
+            </div>`;
+        }).join('');
+    }
+
+    // --- 3. LIVE BACKGROUND ALARM ENGINE ---
+    function checkAlarms() {
+        const now = new Date().getTime();
+        
+        for (let i = 0; i < activeTasks.length; i++) {
+            let task = activeTasks[i];
+            let taskTime = new Date(task.reminderTime).getTime();
+            
+            // If current time passes reminder time AND it hasn't alerted yet
+            if (now >= taskTime && !task.notified) {
+                triggerAlarm(task);
+                // Mark as notified so it doesn't loop infinitely
+                activeTasks[i].notified = true; 
+                saveLocal();
+                break; // Only trigger one alarm at a time to prevent modal overlapping
+            }
+        }
+    }
+
+    function triggerAlarm(task) {
+        currentAlarmTask = task;
+        
+        // Show Modal
+        document.getElementById('alarmText').innerText = `[${task.category}] - ${task.description}`;
+        document.getElementById('alarmModal').style.display = 'flex';
+        
+        // Use Device's Built-in Voice to speak the alarm!
+        if ('speechSynthesis' in window) {
+            const msg = new SpeechSynthesisUtterance();
+            msg.text = `Reminder from IBI. You have a pending ${task.category}. ${task.description}`;
+            msg.rate = 0.9;
+            msg.pitch = 1;
+            window.speechSynthesis.speak(msg);
+        }
+    }
+
+    function stopAlarm() {
+        document.getElementById('alarmModal').style.display = 'none';
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop speaking if user clicks early
+        }
+        currentAlarmTask = null;
+    }
+
+    // Initialize
+    renderTasks();
+    // Check for alarms every 10 seconds
+    setInterval(checkAlarms, 10000);
+
+</script>
+</body>
+</html>
